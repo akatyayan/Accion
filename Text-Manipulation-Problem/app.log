@@ -1,0 +1,7 @@
+cat > app.log <<EOF
+2025-04-29 11:21:33 INFO User logged in from 192.168.1.10
+2025-04-29 11:22:10 WARNING Disk space low
+2025-04-29 11:23:02 ERROR Unable to connect to DB from user@example.com
+2025-04-29 11:25:18 INFO Health check OK
+2025-04-29 11:26:10 ERROR Timeout from 10.0.0.5
+EOF

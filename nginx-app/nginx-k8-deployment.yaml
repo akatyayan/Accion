@@ -1,0 +1,127 @@
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${ENVIRONMENT}
+---
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  namespace: ${ENVIRONMENT}
+  labels:
+    app: nginx-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+    spec:
+      containers:
+      - name: nginx
+        image: ghcr.io/repo/nginx-app:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 101
+          capabilities:
+            drop:
+            - ALL
+---
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-app
+  namespace: ${ENVIRONMENT}
+spec:
+  selector:
+    app: nginx-app
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+# canary.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app-canary
+  namespace: production
+  labels:
+    app: nginx-app
+    version: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-app
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: nginx-app
+        version: canary
+    spec:
+      containers:
+      - name: nginx
+        image: ghcr.io/your-repo/nginx-app:latest
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 101
+          capabilities:
+            drop:
+            - ALL
